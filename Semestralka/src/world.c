@@ -107,22 +107,5 @@ void world_update(World* world, int key) {
         world->grid[fruit.position.y][fruit.position.x] = FRUIT;
     }
 
-        world_draw(world);
-}
 
-void world_draw(const World* world) {
-    printf("\033[H");
-    for (int i = 0; i < world->height; i++) {
-        for (int j = 0; j < world->width; j++) {
-            char c = world->grid[i][j];
-            switch (c) {
-            case FRUIT: printf(ZELENA "%c" RESET_FARBA, c); break;
-            case SNAKE: printf(ORANZOVA "%c" RESET_FARBA, c); break;
-            case WALL: printf(MODRA "%c" RESET_FARBA, c); break;
-            default: printf("%c", c);
-            }
-        }
-        printf("\n");
-    }
-  fflush(stdout);
 }

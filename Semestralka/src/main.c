@@ -9,14 +9,11 @@ int main() {
     int key = 2; // Predvolený smer: dole
     world_init(&world, 20, 10);
 
-    enable_raw_mode();
-    system("clear");
     while (!world.game_over) {
         input(&key);
         world_update(&world, key);
         usleep(200000); // Spomalenie hry
     }
-    disable_raw_mode();
-    printf("Hra skončila. Ďakujeme za hranie!\n");
+    printf("prisiel som tadeto");
     return 0;
 }

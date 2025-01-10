@@ -5,8 +5,6 @@
 #include "snake.h"
 #include <stdbool.h>
 
-#define MAX_WIDTH 100
-#define MAX_HEIGHT 100
 #define EMPTY ' ' // Prázdno
 #define WALL '#'  // Stena
 #define SNAKE 'O' // Had
@@ -19,7 +17,7 @@
 typedef struct {
     int width;
     int height;
-    char grid[MAX_HEIGHT][MAX_WIDTH];
+    char grid[20][20];
     Snake snake;
     FruitManager fruit_manager;
     bool game_over; // Pridaná premenná na sledovanie stavu hry
