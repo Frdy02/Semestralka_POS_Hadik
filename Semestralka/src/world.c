@@ -2,27 +2,36 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
-void world_init(World* world, int width, int height) {
-    world->width = width;
-    world->height = height;
-    memset(world->grid, EMPTY, sizeof(world->grid));
+void world_init(World* world) {
 
+    FILE* file = fopen("gameworld.txt", "r");
+    if(!file) {
+      perror("Chyba pri otvarani suboru.\n");
+      exit(EXIT_FAILURE);
+    } 
+    
+    if(fscanf(file," %d %d", &world->width, &world->height) != 2) {
+      perror("Neplatny format suboru.\n");
+      fclose(file);
+      exit(EXIT_FAILURE);
+    }
+    fclose(file);
 
-
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (i == 0 || i == height - 1 || j == 0 || j == width - 1) {
+    for (int i = 0; i < world->height; i++) {
+        for (int j = 0; j < world->width; j++) {
+            if (i == 0 || i == world->height - 1 || j == 0 || j == world->width - 1) {
                 world->grid[i][j] = WALL;
             }
             else {
-                                world->grid[i][j] = EMPTY;
+              world->grid[i][j] = EMPTY;
             }
         }
     }
 
     // Inicializácia hada
-    snake_init(&world->snake, width / 2, height / 2);
+    snake_init(&world->snake, world->width / 2, world->height / 2);
     for (int i = 0; i < world->snake.length; i++) {
         world->grid[world->snake.body[i].y][world->snake.body[i].x] = SNAKE;
     }

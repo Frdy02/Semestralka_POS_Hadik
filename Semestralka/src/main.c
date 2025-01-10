@@ -7,7 +7,7 @@
 int main() {
     World world;
     int key = 2; // Predvolený smer: dole
-    world_init(&world, 20, 10);
+    world_init(&world);
 
     enable_raw_mode();
     system("clear");
