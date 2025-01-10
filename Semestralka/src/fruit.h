@@ -3,20 +3,14 @@
 
 #include "position.h"
 
+
 typedef struct {
-        Position position;
+  Position position;
 
 } Fruit;
 
-typedef struct {
-        Fruit fruits[100];
-        int count;
-        int current_index;
-
-} FruitManager;
-
-void fruit_manager_init(FruitManager* manager);
-int fruit_manager_load(FruitManager* manager, const char* filename);
-int fruit_next(FruitManager* manager, Fruit* fruit);
+void fruit_init(Fruit* fruit);
+Position fruit_get_position(const Fruit* fruit);
+void fruit_set_position(Fruit* fruit, int x, int y);
 
 #endif
