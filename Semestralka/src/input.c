@@ -5,37 +5,16 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-static struct termios oldt, newt;
-
-void enable_raw_mode() {
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-}
-
-void disable_raw_mode() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-}
-
-int kbhit(void) {
-    struct timeval tv = { 0, 0 };
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-    return select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv) > 0;
-}
-
-char get_input(void) {
-    return getchar();
-}
-
 void input(int* key) {
-    if (kbhit()) {
-        char user_input = get_input();
+    int ch = getch();
+    if (ch == ERR) {
+      return;  
+    }
+
+    flushinp();
 
         // Spracovanie vstupu od používateľa
-        switch (user_input) {
+        switch (ch) {
         case 'w':
             if (*key != 2)*key = 0;  // Hore
             break;
@@ -52,5 +31,4 @@ void input(int* key) {
             // Ignorovať neplatný vstup
             break;
         }
-  }
 }
