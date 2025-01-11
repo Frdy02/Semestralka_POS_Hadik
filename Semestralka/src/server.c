@@ -60,13 +60,14 @@ int main(int argc, char const* argv[])
         perror("accept");
         exit(EXIT_FAILURE);
     }
-
+    read(new_socket, &sirka, sizeof(int)); 
+    read(new_socket, &dlzka, sizeof(int)); 
     
     World world;
-    world_init(&world);
+    world_init(&world , sirka , dlzka);
     time_t start_time = time(NULL);
-    send(new_socket, &sirka, sizeof(int), 0);
-    send(new_socket, &dlzka, sizeof(int), 0);
+    //send(new_socket, &sirka, sizeof(int), 0);
+    //send(new_socket, &dlzka, sizeof(int), 0);
     
     // Čítanie správ od klienta, kým správa nie je 2
     while (!world.game_over) {
@@ -75,7 +76,9 @@ int main(int argc, char const* argv[])
         world_update(&world, sprava);
         usleep(125000);
         send(new_socket, &world.game_over , sizeof(bool), 0);
-        send(new_socket, &world.grid , sizeof(world.grid), 0);
+        for (int i = 0; i < world.height; i++) {
+            send(new_socket, world.grid[i], world.width * sizeof(char), 0);
+        }
         send(new_socket, &world.snake.length, sizeof(world.snake.length), 0);
         send(new_socket, &elapsed_time, sizeof(elapsed_time), 0);
         read(new_socket, &sprava, sizeof(int)); 

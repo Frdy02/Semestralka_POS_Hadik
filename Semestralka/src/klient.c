@@ -24,10 +24,17 @@ void init_colors() {
     init_pair(3, COLOR_BLUE, COLOR_BLACK);    // Farba pre steny
 }
 
-void start_server_if_needed() {
+void start_server_if_needed(int* vyska, int* sirka) {
     int status = system("ss -tuln | grep -q :8082");
     if (status != 0) { // Ak server nebeží
         printf("Server nie je spustený. Spúšťam server...\n");
+
+        // Získaj vstupy od užívateľa
+        printf("Zadajte šírku hracej plochy: ");
+        scanf("%d", vyska);
+        printf("Zadajte výšku hracej plochy: ");
+        scanf("%d", sirka);
+
         pid_t pid = fork();
         if (pid == 0) {
             // Dieťa – spustí server
@@ -46,12 +53,12 @@ int main(int argc, char const* argv[]) {
     int status, client_fd;
     struct sockaddr_in serv_addr;
     int key = 0;
-    char mapa[20][20] = { 0 }; // Fixná veľkosť pre ukážku
     bool game_over = false;
-    int sirka = 0, dlzka = 0, skore = 0, elapsed_time = 0;
+    int vyska = 0, sirka = 0, skore = 0, elapsed_time = 0;
+    char **mapa = NULL; // Dynamická alokácia pre mriežku
 
     // Skontroluj a spusti server, ak nie je spustený
-    start_server_if_needed();
+    start_server_if_needed(&vyska, &sirka);
 
     // Vytvorenie socketu
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -72,11 +79,33 @@ int main(int argc, char const* argv[]) {
         return -1;
     }
 
-    // Čítanie rozmerov mriežky zo servera
-    read(client_fd, &sirka, sizeof(int));
-    read(client_fd, &dlzka, sizeof(int));
+    // Ak server nebežal, pošli dĺžku a šírku na server
+    if (vyska > 0 && sirka > 0) {
+        send(client_fd, &vyska, sizeof(int), 0);
+        send(client_fd, &sirka, sizeof(int), 0);
+    }
 
-    // Inicializácia ncurses
+    // Dynamická alokácia mriežky
+    mapa = malloc(sirka * sizeof(char*));
+    if (!mapa) {
+        perror("Nepodarilo sa alokovať mriežku");
+        close(client_fd);
+        return -1;
+    }
+
+    for (int i = 0; i < sirka; i++) {
+        mapa[i] = malloc(vyska * sizeof(char));
+        if (!mapa[i]) {
+            perror("Nepodarilo sa alokovať riadok mriežky");
+            for (int j = 0; j < i; j++) {
+                free(mapa[j]);
+            }
+            free(mapa);
+            close(client_fd);
+            return -1;
+        }
+    }
+
     initscr();
     noecho();
     cbreak();
@@ -97,16 +126,18 @@ int main(int argc, char const* argv[]) {
 
         // Čítanie stavu hry a mriežky zo servera
         read(client_fd, &game_over, sizeof(bool));
-        read(client_fd, &mapa, sizeof(mapa));
+        for (int i = 0; i < sirka; i++) {
+            read(client_fd, mapa[i], vyska * sizeof(char));
+        }
         read(client_fd, &skore, sizeof(int));
         read(client_fd, &elapsed_time, sizeof(elapsed_time));
 
         clear();
-        mvprintw(0, 0, "Score: %d | Time: %d s", skore, elapsed_time);
+        mvprintw(0, 0, "Skóre: %d | Čas: %d s", skore, elapsed_time);
 
         // Vykreslenie mriežky
-        for (int i = 0; i < dlzka; i++) {
-            for (int j = 0; j < sirka; j++) {
+        for (int i = 0; i < sirka; i++) {
+            for (int j = 0; j < vyska; j++) {
                 char c = mapa[i][j];
                 switch (c) {
                     case FRUIT:
@@ -132,8 +163,15 @@ int main(int argc, char const* argv[]) {
         refresh();
     }
 
+    // Uvoľnenie pamäte
+    for (int i = 0; i < sirka; i++) {
+        free(mapa[i]);
+    }
+    free(mapa);
+
     // Ukončenie hry
     endwin();
     close(client_fd);
     return 0;
 }
+
