@@ -1,8 +1,3 @@
-#define EMPTY ' ' // Prázdno
-#define WALL '#'  // Stena
-#define SNAKE 'O' // Had
-#define FRUIT '*' // Ovocie
-
 #include "input.h"
 #include <sys/select.h>
 #include <unistd.h>
@@ -13,14 +8,38 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <ncurses.h>
+#include <stdlib.h>
+#include <sys/wait.h>
 
 #define PORT 8082
+#define EMPTY ' ' // Prázdno
+#define WALL '#'  // Stena
+#define SNAKE 'O' // Had
+#define FRUIT '*' // Ovocie
 
 void init_colors() {
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);   // Farba pre ovocie
     init_pair(2, COLOR_YELLOW, COLOR_BLACK);  // Farba pre hada
     init_pair(3, COLOR_BLUE, COLOR_BLACK);    // Farba pre steny
+}
+
+void start_server_if_needed() {
+    int status = system("ss -tuln | grep -q :8082");
+    if (status != 0) { // Ak server nebeží
+        printf("Server nie je spustený. Spúšťam server...\n");
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Dieťa – spustí server
+            execl("./server", "./server", NULL);
+            perror("Spustenie servera zlyhalo");
+            exit(EXIT_FAILURE);
+        } else if (pid < 0) {
+            perror("Fork zlyhal");
+            exit(EXIT_FAILURE);
+        }
+        sleep(1); // Počkaj sekundu, kým sa server spustí
+    }
 }
 
 int main(int argc, char const* argv[]) {
@@ -30,6 +49,9 @@ int main(int argc, char const* argv[]) {
     char mapa[20][20] = { 0 }; // Fixná veľkosť pre ukážku
     bool game_over = false;
     int sirka = 0, dlzka = 0, skore = 0, elapsed_time = 0;
+
+    // Skontroluj a spusti server, ak nie je spustený
+    start_server_if_needed();
 
     // Vytvorenie socketu
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -79,12 +101,10 @@ int main(int argc, char const* argv[]) {
         read(client_fd, &skore, sizeof(int));
         read(client_fd, &elapsed_time, sizeof(elapsed_time));
 
-
         clear();
         mvprintw(0, 0, "Score: %d | Time: %d s", skore, elapsed_time);
 
         // Vykreslenie mriežky
-        
         for (int i = 0; i < dlzka; i++) {
             for (int j = 0; j < sirka; j++) {
                 char c = mapa[i][j];
