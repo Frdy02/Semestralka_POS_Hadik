@@ -14,7 +14,7 @@ void world_init_colors() {
 }
 
 void world_generate_fruit(World* world) {
-    srand(time(NULL));
+    
     int x, y;
     do {
         x = rand() % world->width;
@@ -25,12 +25,18 @@ void world_generate_fruit(World* world) {
     world->grid[y][x] = FRUIT;
 }
 
-void world_init(World* world) {
+void world_init(World* world, int width, int height) {
+    world->width = width;
+    world->height = height;
+
+    world->grid = malloc(height * sizeof(char*));
+    for (int i = 0; i < height; i++) {
+        world->grid[i] = malloc(width * sizeof(char));
+    }
+
+    srand(time(NULL));
     world_init_colors();
      
-    world->width = 20;
-    world->height = 20;
-
     for (int i = 0; i < world->height; i++) {
         for (int j = 0; j < world->width; j++) {
             world->grid[i][j] = (i == 0 || i == world->height - 1 || j == 0 || j == world->width - 1) ? WALL : EMPTY;
@@ -129,3 +135,9 @@ void world_draw(const World* world) {
     refresh();
 }
 
+void world_free(World *world) {
+    for (int i = 0; i < world->height; i++) {
+        free(world->grid[i]);
+    }
+    free(world->grid);
+}
