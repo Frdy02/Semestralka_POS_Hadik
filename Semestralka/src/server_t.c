@@ -42,27 +42,10 @@ void* computation_loop(void* arg) {
     if (!state->is_world_initialized) {
         printf("Initializing game world...\n");
 
-        // NCurses initialization
-        initscr();
-        noecho();
-        cbreak();
-        keypad(stdscr, TRUE);
-        curs_set(0);
-        nodelay(stdscr, TRUE);
-        init_colors();
-
-        // Configure game world
-        attron(COLOR_PAIR(4));
-        mvprintw(0, 0, "Enter the width of the playing field: ");
-        scanw("%d", &state->sirka);
-        mvprintw(1, 0, "Enter the height of the playing field: ");
-        scanw("%d", &state->vyska);
-        mvprintw(2, 0, "Enter game mode (1 - Standard, 2 - Timed): ");
-        scanw("%d", &state->rezim);
-        mvprintw(3, 0, "Enter the type of world (1 - Without Obstacles, 2 - With Obstacles): ");
-        scanw("%d", &state->typ);
-        attroff(COLOR_PAIR(4));
-        refresh();
+        read(state->client_fd[0], &state->sirka, sizeof(int));
+        read(state->client_fd[0], &state->vyska, sizeof(int));
+        read(state->client_fd[0], &state->rezim, sizeof(int));
+        read(state->client_fd[0], &state->typ, sizeof(int));
 
         // Initialize game world
         world_init(&state->world, state->sirka, state->vyska, state->rezim, state->typ);
@@ -117,6 +100,11 @@ void* client_handler(void* arg) {
 
     // Pridať nového hráča do sveta
     world_add_player(&state->world);
+
+    send(client_fd, &state->vyska, sizeof(int), 0);
+    send(client_fd, &state->sirka, sizeof(int), 0);
+    send(client_fd, &state->sirka, sizeof(int), 0);
+    send(client_fd, &state->sirka, sizeof(int), 0);
 
     while (!state->world.game_over) {
         ssize_t bytes_read = read(client_fd, &received_value, sizeof(int));
@@ -220,6 +208,6 @@ int main() {
     pthread_mutex_destroy(&state.lock);
     endwin();
     world_free(&state.world);
-
+    echo();
     return 0;
 }

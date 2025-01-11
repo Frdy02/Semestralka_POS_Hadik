@@ -23,10 +23,54 @@ void init_colors() {
     init_pair(5, COLOR_RED, COLOR_BLACK);     // Červený text
 }
 
-void start_server_if_needed() {
+void start_server_if_needed(int *vyska, int *sirka, int *rezim, int *typ) {
     // Skontroluj, či server beží na porte 9090
+    printf("som tu");
     int status = system("ss -tuln | grep -q :9090");
+    printf("uz som aj tu");
     if (status != 0) { // Ak server nebeží
+
+        initscr();
+        noecho();
+        cbreak();
+        init_colors();
+        
+        attron(COLOR_PAIR(2)); // Žltý text
+        mvprintw(0, 0, "Server is not on. Turning on the server...");
+        attroff(COLOR_PAIR(2));
+        refresh();
+        sleep(1); // Čas na zobrazenie správy
+
+        // Získaj vstupy od užívateľa
+        attron(COLOR_PAIR(4)); // Svetlomodrý text
+        mvprintw(2, 0, "---------- INITIAL    MENU ---------");
+        mvprintw(3, 0, "---------- CONFIG THE GAME ---------");
+        attroff(COLOR_PAIR(4));
+
+        attron(COLOR_PAIR(1)); // Zelený text
+        mvprintw(5, 0, "Enter the width of the playing field ");
+        attroff(COLOR_PAIR(1));
+        echo();
+        scanw("%d", sirka);
+
+        attron(COLOR_PAIR(1)); // Zelený text
+        mvprintw(6, 0, "Enter the height of the playing field ");
+        attroff(COLOR_PAIR(1));
+        scanw("%d", vyska);
+
+        attron(COLOR_PAIR(3)); // Modrý text
+        mvprintw(7, 0, "Enter game mode: (1 - STANDARD | 2 - TIMED): ");
+        attroff(COLOR_PAIR(3));
+        scanw("%d", rezim);
+
+        attron(COLOR_PAIR(3)); // Modrý text
+        mvprintw(8, 0, "Enter the type of game world: (1 - WITHOUT OBSTACLES | 2 - WITH OBSTACLES): ");
+        attroff(COLOR_PAIR(3));
+        scanw("%d", typ);
+        noecho();
+
+        refresh();
+
         printf("Server nie je spustený. Spúšťam server...\n");
         pid_t pid = fork();
         if (pid == 0) {
@@ -38,19 +82,30 @@ void start_server_if_needed() {
             perror("Fork zlyhal");
             exit(EXIT_FAILURE);
         }
+
+    
+
+        endwin();
+
         // Počkajte, kým sa server spustí
         sleep(1);
     }
 }
 
 int main() {
-    int client_fd, sirka, vyska, rezim, typ, key = 0, score = 0, elapsed_time = 0;
+    int client_fd, sirka = 0,
+    vyska = 0,
+    rezim = 0, 
+    typ = 0, 
+    key = 0, 
+    score = 0, 
+    elapsed_time = 0;
     bool game_over = false;
     struct sockaddr_in serv_addr;
     char **mapa;
 
     // Spustenie servera, ak je to potrebné
-    start_server_if_needed();
+    start_server_if_needed(&vyska, &sirka, &rezim, &typ);
 
     // Vytvorenie soketu
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -74,6 +129,14 @@ int main() {
     }
 
     printf("Pripojený na server.\n");
+
+
+    if (vyska > 0 && sirka > 0) {
+        send(client_fd, &vyska, sizeof(int), 0);
+        send(client_fd, &sirka, sizeof(int), 0);
+        send(client_fd, &sirka, sizeof(int), 0);
+        send(client_fd, &sirka, sizeof(int), 0);
+    }
 
     // Prijímanie parametrov hry
     read(client_fd, &sirka, sizeof(int));
