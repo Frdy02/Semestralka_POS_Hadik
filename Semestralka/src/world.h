@@ -18,7 +18,7 @@
 typedef struct {
     int width;
     int height;
-    char grid[20][20];
+    char** grid;
     Snake snake;
     Fruit fruit;
     bool game_over; // Pridaná premenná na sledovanie stavu hry
@@ -27,5 +27,6 @@ typedef struct {
 void world_init(World* world);
 void world_update(World* world, int key);
 void world_draw(const World* world);
+void world_free(World *world);
 
 #endif
