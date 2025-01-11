@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ncurses.h>
+#include <time.h>
 
 void world_init_colors() {
     start_color();
@@ -13,6 +14,7 @@ void world_init_colors() {
 }
 
 void world_generate_fruit(World* world) {
+    srand(time(NULL));
     int x, y;
     do {
         x = rand() % world->width;
@@ -95,11 +97,11 @@ void world_update(World* world, int key) {
         world->grid[snake->body[i].y][snake->body[i].x] = SNAKE;
     }
 
-    world_draw(world);
 }
 
 void world_draw(const World* world) {
-    clear();
+    printf("%d", world->height);
+    
     for (int i = 0; i < world->height; i++) {
         for (int j = 0; j < world->width; j++) {
             char c = world->grid[i][j];

@@ -10,7 +10,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#define PORT 8080
+#include <time.h>
+#define PORT 8082
 int main(int argc, char const* argv[])
 {
     int server_fd, new_socket;
@@ -63,15 +64,20 @@ int main(int argc, char const* argv[])
     
     World world;
     world_init(&world);
+    time_t start_time = time(NULL);
     send(new_socket, &sirka, sizeof(int), 0);
     send(new_socket, &dlzka, sizeof(int), 0);
     
     // Čítanie správ od klienta, kým správa nie je 2
     while (!world.game_over) {
+        time_t current_time = time(NULL);
+        int elapsed_time = (int)(current_time - start_time);
         world_update(&world, sprava);
-        usleep(200000);
+        usleep(125000);
         send(new_socket, &world.game_over , sizeof(bool), 0);
         send(new_socket, &world.grid , sizeof(world.grid), 0);
+        send(new_socket, &world.snake.length, sizeof(world.snake.length), 0);
+        send(new_socket, &elapsed_time, sizeof(elapsed_time), 0);
         read(new_socket, &sprava, sizeof(int)); 
     }
 
