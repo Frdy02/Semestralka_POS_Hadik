@@ -3,6 +3,6 @@
 
 #include <ncurses.h>
 
-void input(int* key);
+void input(int* key, int* key2);
 
 #endif

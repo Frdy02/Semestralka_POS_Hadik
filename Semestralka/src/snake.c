@@ -7,5 +7,6 @@ void snake_init(Snake* snake, int start_x, int start_y) {
     // Inicializácia hlavy hada
     snake->body[0].x = start_x;
     snake->body[0].y = start_y;
+    snake->dead = false;
 }
 

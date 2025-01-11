@@ -24,6 +24,8 @@ int main(int argc, char const* argv[])
     int sprava = 0;
     int sirka = 20;
     int dlzka = 20;
+    int rezim = 1;
+    int typ = 1;
 
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -62,14 +64,18 @@ int main(int argc, char const* argv[])
     }
     read(new_socket, &sirka, sizeof(int)); 
     read(new_socket, &dlzka, sizeof(int)); 
+    read(new_socket, &rezim, sizeof(int));
+    read(new_socket, &typ, sizeof(int));
+    printf("%d", rezim);
+    printf("%d", typ);
     
     World world;
-    world_init(&world , sirka , dlzka);
+    world_init(&world , sirka , dlzka, rezim, typ);
     time_t start_time = time(NULL);
     //send(new_socket, &sirka, sizeof(int), 0);
     //send(new_socket, &dlzka, sizeof(int), 0);
     
-    // Čítanie správ od klienta, kým správa nie je 2
+    // Čítanie správ od klienta, kým správa hra beží
     while (!world.game_over) {
         time_t current_time = time(NULL);
         int elapsed_time = (int)(current_time - start_time);
@@ -81,7 +87,8 @@ int main(int argc, char const* argv[])
         }
         send(new_socket, &world.snake.length, sizeof(world.snake.length), 0);
         send(new_socket, &elapsed_time, sizeof(elapsed_time), 0);
-        read(new_socket, &sprava, sizeof(int)); 
+        read(new_socket, &sprava, sizeof(int));
+
     }
 
     

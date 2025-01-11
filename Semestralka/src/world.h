@@ -14,18 +14,20 @@
 #define COLOR_PAIR_FRUIT 1
 #define COLOR_PAIR_SNAKE 2
 #define COLOR_PAIR_WALL 3
+#define MAX_PLAYERS 10
 
 typedef struct {
     int width;
     int height;
     char** grid;
-    Snake snake;
+    Snake snakes[MAX_PLAYERS];
+    int player_count;
     Fruit fruit;
     bool game_over; // Pridaná premenná na sledovanie stavu hry
 } World;
 
-void world_init(World* world, int width, int height);
-void world_update(World* world, int key);
+void world_init(World* world, int width, int height, int rezim, int typ, int playercount);
+void world_update(World* world, int keys[MAX_PLAYERS]);
 void world_draw(const World* world);
 void world_free(World *world);
 
