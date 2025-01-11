@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void input(int* key_player1, int* key_player2) {
+void input(int* key_player1) {
     int ch;
 
     // Spracovanie vstupu v cykle
@@ -26,20 +26,5 @@ void input(int* key_player1, int* key_player2) {
                 break;
         }
 
-        // Spracovanie vstupu od hráča 2 (šípky)
-        switch (ch) {
-            case KEY_UP:
-                if (*key_player2 != 2) *key_player2 = 0;  // Hore
-                break;
-            case KEY_LEFT:
-                if (*key_player2 != 3) *key_player2 = 1;  // Vľavo
-                break;
-            case KEY_DOWN:
-                if (*key_player2 != 0) *key_player2 = 2;  // Dole
-                break;
-            case KEY_RIGHT:
-                if (*key_player2 != 1) *key_player2 = 3;  // Vpravo
-                break;
-        }
     }
 }

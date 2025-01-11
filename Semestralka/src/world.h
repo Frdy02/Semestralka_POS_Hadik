@@ -26,7 +26,7 @@ typedef struct {
     bool game_over; // Pridaná premenná na sledovanie stavu hry
 } World;
 
-void world_init(World* world, int width, int height, int rezim, int typ, int playercount);
+void world_init(World* world, int width, int height, int rezim, int typ);
 void world_update(World* world, int keys[MAX_PLAYERS]);
 void world_draw(const World* world);
 void world_free(World *world);

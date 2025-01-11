@@ -12,6 +12,7 @@
 typedef struct {
     int client_fd[MAX_CLIENTS];
     int client_count;
+    bool is_calculator_initialized;
     int x_client_1;
     int x_client_2;
     pthread_mutex_t lock;
@@ -39,6 +40,14 @@ void* client_handler(void* arg) {
     int client_fd = state->client_fd[client_idx];
     int received_value = 0;
 
+    // Skontroluj, či už bola kalkulačka inicializovaná
+    pthread_mutex_lock(&state->lock);
+    if (!state->is_calculator_initialized) {
+        printf("Inicializujem kalkulačku...\n");
+        state->is_calculator_initialized = true;
+    }
+    pthread_mutex_unlock(&state->lock);
+
     while (1) {
         // Čakaj na správu od klienta
         ssize_t bytes_read = read(client_fd, &received_value, sizeof(int));
@@ -65,7 +74,7 @@ int main() {
     int server_fd, new_socket;
     struct sockaddr_in address;
     socklen_t addr_len = sizeof(address);
-    ServerState state = { .client_count = 0, .x_client_1 = 0, .x_client_2 = 0 };
+    ServerState state = { .client_count = 0, .is_calculator_initialized = false, .x_client_1 = 0, .x_client_2 = 0 };
     pthread_mutex_init(&state.lock, NULL);
 
     // Nastavenie klientov ako neaktívnych

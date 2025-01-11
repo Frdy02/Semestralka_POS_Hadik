@@ -77,8 +77,8 @@ void world_generate_fruit(World* world) {
 }
 
 // Inicializácia sveta
-void world_init(World* world, int width, int height, int rezim, int typ, int playercount) {
-    world->player_count = playercount;
+void world_init(World* world, int width, int height, int rezim, int typ) {
+    world->player_count = 1;
     world->width = width;
     world->height = height;
 

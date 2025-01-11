@@ -3,12 +3,36 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <sys/wait.h>
 
 #define PORT 9090
+
+void start_server_if_needed() {
+    // Skontroluj, či server beží na porte 9090
+    int status = system("ss -tuln | grep -q :9090");
+    if (status != 0) { // Ak server nebeží
+        printf("Server nie je spustený. Spúšťam server...\n");
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Dieťa – spustí server
+            execl("./server_t", "./server_t", NULL);
+            perror("Spustenie servera zlyhalo");
+            exit(EXIT_FAILURE);
+        } else if (pid < 0) {
+            perror("Fork zlyhal");
+            exit(EXIT_FAILURE);
+        }
+        // Počkajte, kým sa server spustí
+        sleep(1);
+    }
+}
 
 int main() {
     int client_fd;
     struct sockaddr_in serv_addr;
+
+    // Spustenie servera, ak je to potrebné
+    start_server_if_needed();
 
     // Vytvorenie soketu
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
