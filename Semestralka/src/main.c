@@ -20,7 +20,7 @@ int main() {
     nodelay(stdscr, TRUE);
 
     // Inicializácia herného sveta
-    world_init(&world, 20, 20, 0, 1, 1);
+    world_init(&world, 20, 20, 0, 1);
 
     time_t start_time = time(NULL);
     while (!world.game_over) {
@@ -35,7 +35,7 @@ int main() {
         
 
         // Spracovanie vstupov pre všetkých hráčov
-        input(&keys[0], &keys[1]); // keys[0] pre hráča 1, keys[1] pre hráča 2
+        input(&keys[0]); // keys[0] pre hráča 1, keys[1] pre hráča 2
 
         // Aktualizácia sveta
         world_update(&world, keys);
