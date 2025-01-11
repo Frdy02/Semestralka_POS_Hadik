@@ -7,6 +7,35 @@
 #include <time.h>
 #include <math.h>
 
+void world_generate_obstacles(World* world) {
+    
+    int obstacle_count = (world->width * world->height) / 100; // 1% plochy prekážkami
+    if (obstacle_count < 2) {
+        obstacle_count = 2; // Minimálne 2 prekážky
+    }
+
+    for (int i = 0; i < obstacle_count; i++) {
+        int x = rand() % (world->width - 2) + 1;  // Vyhnutie sa stenám
+        int y = rand() % (world->height - 2) + 1;
+        int length = rand() % 3 + 1; // Dĺžka prekážky (1 až 3)
+        int orientation = rand() % 2; // 0 = horizontálna, 1 = vertikálna
+
+        for (int j = 0; j < length; j++) {
+            if (orientation == 0) { // Horizontálna prekážka
+                if (x + j < world->width - 1 && world->grid[y][x + j] == EMPTY) {
+                    world->grid[y][x + j] = OBSTACLE;
+                }
+            } else { // Vertikálna prekážka
+                if (y + j < world->height - 1 && world->grid[y + j][x] == EMPTY) {
+                    world->grid[y + j][x] = OBSTACLE;
+                }
+            }
+        }
+    }
+}
+
+
+
 void world_add_player(World* world) {
     bool safe;
     if (world->player_count >= MAX_PLAYERS) {
@@ -62,6 +91,7 @@ void world_init_colors() {
     init_pair(COLOR_PAIR_FRUIT, COLOR_GREEN, COLOR_BLACK);
     init_pair(COLOR_PAIR_SNAKE, COLOR_YELLOW, COLOR_BLACK);
     init_pair(COLOR_PAIR_WALL, COLOR_BLUE, COLOR_BLACK);
+    init_pair(COLOR_PAIR_OBSTACLE, COLOR_RED, COLOR_BLACK);
 }
 
 // Generovanie ovocia na náhodnej pozícii
@@ -81,14 +111,15 @@ void world_init(World* world, int width, int height, int rezim, int typ, int pla
     world->player_count = playercount;
     world->width = width;
     world->height = height;
+    world->typ = typ;
+    world->rezim = rezim;
 
-    // Dynamická alokácia pamäte pre 2D maticu grid
+    // Dynamická alokácia pamäte pre grid
     world->grid = malloc(height * sizeof(char*));
     if (!world->grid) {
         perror("Failed to allocate memory for grid");
         exit(EXIT_FAILURE);
     }
-
     for (int i = 0; i < height; i++) {
         world->grid[i] = malloc(width * sizeof(char));
         if (!world->grid[i]) {
@@ -100,14 +131,19 @@ void world_init(World* world, int width, int height, int rezim, int typ, int pla
     srand(time(NULL));
     world_init_colors();
 
-    // Naplnenie gridu stenami a prázdnymi políčkami
+    // Inicializácia mriežky (steny a prázdne políčka)
     for (int i = 0; i < world->height; i++) {
         for (int j = 0; j < world->width; j++) {
             world->grid[i][j] = (i == 0 || i == world->height - 1 || j == 0 || j == world->width - 1) ? WALL : EMPTY;
         }
     }
 
-    // Inicializácia hada STATICKY
+    // Ak je typ sveta 2, generuj prekážky
+    if (typ == 2) {
+        world_generate_obstacles(world);
+    }
+
+    // Inicializácia prvého hada
     snake_init(&world->snakes[0], world->width / 2, world->height / 2);
     for (int i = 0; i < world->snakes[0].length; i++) {
         world->grid[world->snakes[0].body[i].y][world->snakes[0].body[i].x] = SNAKE;
@@ -119,6 +155,7 @@ void world_init(World* world, int width, int height, int rezim, int typ, int pla
 
     world->game_over = false;
 }
+
 
 // Aktualizácia stavu sveta
 void world_update(World* world, int keys[MAX_PLAYERS]) {
@@ -148,21 +185,36 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
             case 3: new_x++; break; // Vpravo
         }
 
-        // Kontrola kolízie so stenami
-        if (new_x <= 0 || new_x >= world->width - 1 || new_y <= 0 || new_y >= world->height - 1) {
-            printf("Hráč %d narazil do steny!\n", p);
-            snake->dead = true;
-            continue;
+        // Wrap-around logika pre typ sveta 1
+        if (world->typ == 1) {
+            if (new_x < 0) new_x = world->width - 2;        // Zľava na pravú stranu (vyhnutie sa stene)
+            if (new_x >= world->width - 1) new_x = 1;      // Sprava na ľavú stranu (vyhnutie sa stene)
+            if (new_y < 0) new_y = world->height - 2;      // Zhora na spodnú stranu (vyhnutie sa stene)
+            if (new_y >= world->height - 1) new_y = 1;     // Zospodu na hornú stranu (vyhnutie sa stene)
+        } else { // Typ sveta 2: Kontrola kolízie so stenami
+            if (new_x <= 0 || new_x >= world->width - 1 || new_y <= 0 || new_y >= world->height - 1) {
+                mvprintw(world->height + 4, 0, "Hráč %d narazil do steny!", p);
+                snake->dead = true;
+                continue;
+            }
         }
 
         // Kontrola kolízie s vlastným telom
         for (int i = 1; i < snake->length; i++) {
             if (snake->body[i].x == new_x && snake->body[i].y == new_y) {
-                printf("Hráč %d narazil do svojho tela!\n", p);
+                mvprintw(world->height + 3, 0, "Hráč %d narazil do svojho tela!", p);
                 snake->dead = true;
                 break;
             }
         }
+
+        // Kontrola kolízie s prekážkami (iba ak typ je 2)
+        if (world->typ == 2 && world->grid[new_y][new_x] == OBSTACLE) {
+            mvprintw(world->height + 2, 0, "Hráč %d narazil do prekážky!", p);
+            snake->dead = true;
+            continue;
+        }
+
         if (snake->dead) continue;
 
         // Kontrola kolízie s inými hadmi
@@ -171,7 +223,7 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
             Snake* other_snake = &world->snakes[i];
             for (int j = 0; j < other_snake->length; j++) {
                 if (other_snake->body[j].x == new_x && other_snake->body[j].y == new_y) {
-                    printf("Hráč %d narazil do hráča %d!\n", p, i);
+                    mvprintw(world->height + 1, 0, "Hráč %d narazil do hráča %d!", p, i);
                     snake->dead = true;
                     break;
                 }
@@ -184,7 +236,7 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
         bool ate_fruit = (new_x == world->fruit.position.x && new_y == world->fruit.position.y);
         if (ate_fruit) {
             snake->length++;
-            printf("Hráč %d zjedol ovocie!\n", p);
+            mvprintw(world->height + 2, 0, "Hráč %d zjedol ovocie!", p);
             world_generate_fruit(world);
         } else {
             // Uvoľnite poslednú pozíciu hada
@@ -205,6 +257,28 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
         }
     }
 
+    // Obnovenie stien po wrap-around
+    for (int i = 0; i < world->width; i++) {
+        world->grid[0][i] = WALL;                      // Horná stena
+        world->grid[world->height - 1][i] = WALL;      // Dolná stena
+    }
+    for (int i = 0; i < world->height; i++) {
+        world->grid[i][0] = WALL;                      // Ľavá stena
+        world->grid[i][world->width - 1] = WALL;       // Pravá stena
+    }
+
+    // Vyčistite telá mŕtvych hadov
+    for (int p = 0; p < world->player_count; p++) {
+        Snake* snake = &world->snakes[p];
+        if (snake->dead && snake->length > 0) {
+            usleep(200000); // Delay pred čistením
+            for (int i = 0; i < snake->length; i++) {
+                world->grid[snake->body[i].y][snake->body[i].x] = EMPTY;
+            }
+            snake->length = 0; // Reset dĺžky mŕtveho hada
+        }
+    }
+
     // Skontrolujte, či sú všetci hráči mŕtvi
     bool all_dead = true;
     for (int i = 0; i < world->player_count; i++) {
@@ -218,6 +292,7 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
         world->game_over = true;
     }
 }
+
 
 
 // Vykreslenie sveta
@@ -241,6 +316,11 @@ void world_draw(const World* world) {
                     attron(COLOR_PAIR(COLOR_PAIR_WALL));
                     mvaddch(i, j, c);
                     attroff(COLOR_PAIR(COLOR_PAIR_WALL));
+                    break;
+                case OBSTACLE:
+                    attron(COLOR_PAIR(COLOR_PAIR_OBSTACLE));
+                    mvaddch(i, j, c);
+                    attroff(COLOR_PAIR(COLOR_PAIR_OBSTACLE));
                     break;
                 default:
                     mvaddch(i, j, c);

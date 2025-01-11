@@ -11,9 +11,11 @@
 #define WALL '#'  // Stena
 #define SNAKE 'O' // Had
 #define FRUIT '*' // Ovocie
+#define OBSTACLE 'X' // Prekážka
 #define COLOR_PAIR_FRUIT 1
 #define COLOR_PAIR_SNAKE 2
 #define COLOR_PAIR_WALL 3
+#define COLOR_PAIR_OBSTACLE 4
 #define MAX_PLAYERS 10
 
 typedef struct {
@@ -24,6 +26,8 @@ typedef struct {
     int player_count;
     Fruit fruit;
     bool game_over; // Pridaná premenná na sledovanie stavu hry
+    int typ;
+    int rezim;
 } World;
 
 void world_init(World* world, int width, int height, int rezim, int typ, int playercount);

@@ -32,6 +32,7 @@ int main() {
             world_add_player(&world); // Pridajte druhého hráča
             player2_active = true;
         }
+        
 
         // Spracovanie vstupov pre všetkých hráčov
         input(&keys[0], &keys[1]); // keys[0] pre hráča 1, keys[1] pre hráča 2
