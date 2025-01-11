@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#define PORT 8080
+#define PORT 9090
 
 int main() {
     int client_fd;

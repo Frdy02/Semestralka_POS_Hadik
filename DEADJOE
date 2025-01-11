@@ -1,0 +1,24 @@
+
+*** These modified files were found in JOE when it aborted on Sat Jan 11 19:24:51 2025
+*** JOE was aborted by UNIX signal 1
+
+*** File '/home/zilincik4/Semestralka_POS_Hadik/.git/MERGE_MSG'
+
+dd
+
+fdfd
+Merge branch 'main' of github.com:Frdy02/Semestralka_POS_Hadik
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit.
+
+*** File '* Startup Log *'
+Processing '/etc/joe/editorrc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc
+
+*** File '(Unnamed)'
+/home/zilincik4/Semestralka_POS_Hadik/.git/MERGE_MSG

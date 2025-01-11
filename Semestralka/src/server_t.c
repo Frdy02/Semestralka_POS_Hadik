@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#define PORT 8080
+#define PORT 9090
 #define MAX_CLIENTS 2
 
 typedef struct {
