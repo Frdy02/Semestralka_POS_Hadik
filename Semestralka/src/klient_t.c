@@ -11,7 +11,7 @@
 #define SNAKE 'O' // Had
 #define FRUIT '*' // Ovocie
 
-#define PORT 9090
+#define PORT 9091
 
 
 void init_colors() {

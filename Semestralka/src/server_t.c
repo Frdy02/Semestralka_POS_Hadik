@@ -8,7 +8,7 @@
 #include <ncurses.h>
 #include "world.h"
 
-#define PORT 9090
+#define PORT 9091
 #define MAX_CLIENTS 20
 
 typedef struct {
@@ -52,7 +52,7 @@ void* computation_loop(void* arg) {
         init_colors();
 
         // Configure game world
-        clear();
+        attron(COLOR_PAIR(4));
         mvprintw(0, 0, "Enter the width of the playing field: ");
         scanw("%d", &state->sirka);
         mvprintw(1, 0, "Enter the height of the playing field: ");
@@ -61,9 +61,10 @@ void* computation_loop(void* arg) {
         scanw("%d", &state->rezim);
         mvprintw(3, 0, "Enter the type of world (1 - Without Obstacles, 2 - With Obstacles): ");
         scanw("%d", &state->typ);
-
+        attroff(COLOR_PAIR(4));
         refresh();
 
+        // Initialize game world
         world_init(&state->world, state->sirka, state->vyska, state->rezim, state->typ);
         state->is_world_initialized = true;
 
@@ -80,32 +81,17 @@ void* computation_loop(void* arg) {
             local_buffer[i] = state->buffer[i];
         }
 
-        state->top = 0;
-        
-        
-        // Vynulovanie state->buffer
-        pthread_mutex_lock(&state->lock);
         for (int i = 0; i < MAX_CLIENTS; i++) {
             state->buffer[i] = 0; // Nastavenie na 0
         }
         state->top = 0; // Resetovanie vrcholu bufferu
-        pthread_mutex_unlock(&state->lock);
-        
-                
-        
-        
+
         pthread_mutex_unlock(&state->lock);
 
         world_update(&state->world, local_buffer);
 
-        pthread_mutex_lock(&state->lock);
-        clear();
-        mvprintw(0, 0, "Game is running...");
-        mvprintw(1, 0, "Players connected: %d", state->client_count);
-        refresh();
-        pthread_mutex_unlock(&state->lock);
-
         // Broadcast updated world state to all clients
+        pthread_mutex_lock(&state->lock);
         for (int j = 0; j < state->client_count; j++) {
             int client_fd = state->client_fd[j];
             send(client_fd, &state->world.game_over, sizeof(bool), 0);
@@ -113,6 +99,7 @@ void* computation_loop(void* arg) {
                 send(client_fd, state->world.grid[i], state->world.width * sizeof(char), 0);
             }
         }
+        pthread_mutex_unlock(&state->lock);
 
         for (int i = 0; i < MAX_CLIENTS; i++) {
             local_buffer[i] = 0; // Nastavenie na 0
@@ -121,7 +108,6 @@ void* computation_loop(void* arg) {
 
     return NULL;
 }
-
 
 void* client_handler(void* arg) {
     ServerState* state = (ServerState*)arg;
