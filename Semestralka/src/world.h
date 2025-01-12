@@ -1,7 +1,7 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-
+#include <unistd.h>
 #include "snake.h"
 #include "fruit.h"
 #include <stdbool.h>
@@ -34,5 +34,6 @@ void world_init(World* world, int width, int height, int rezim, int typ);
 void world_update(World* world, int keys[MAX_PLAYERS]);
 void world_draw(const World* world);
 void world_free(World *world);
+void world_add_player(World* world);
 
 #endif

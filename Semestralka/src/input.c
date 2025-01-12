@@ -28,3 +28,4 @@ void input(int* key_player1) {
 
     }
 }
+

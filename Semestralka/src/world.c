@@ -8,91 +8,139 @@
 #include <math.h>
 
 void world_generate_obstacles(World* world) {
-    
-    int obstacle_count = (world->width * world->height) / 100; // 1% plochy prekážkami
+    int obstacle_count = (world->width * world->height) / 100; // 1% plochy
     if (obstacle_count < 2) {
         obstacle_count = 2; // Minimálne 2 prekážky
     }
-
+ 
+    // Definované bezpečné zóny pre hráčov (o 3 bunky od okrajov)
+    int safe_positions[5][2] = {
+        {world->width / 2, world->height / 2},           // Stred
+        {3, 3},                                          // Horný ľavý roh (posunutý)
+        {world->width - 4, 3},                           // Horný pravý roh (posunutý)
+        {3, world->height - 4},                          // Dolný ľavý roh (posunutý)
+        {world->width - 4, world->height - 4}            // Dolný pravý roh (posunutý)
+    };
+ 
     for (int i = 0; i < obstacle_count; i++) {
-        int x = rand() % (world->width - 2) + 1;  // Vyhnutie sa stenám
-        int y = rand() % (world->height - 2) + 1;
-        int length = rand() % 3 + 1; // Dĺžka prekážky (1 až 3)
-        int orientation = rand() % 2; // 0 = horizontálna, 1 = vertikálna
-
-        for (int j = 0; j < length; j++) {
-            if (orientation == 0) { // Horizontálna prekážka
-                if (x + j < world->width - 1 && world->grid[y][x + j] == EMPTY) {
-                    world->grid[y][x + j] = OBSTACLE;
-                }
-            } else { // Vertikálna prekážka
-                if (y + j < world->height - 1 && world->grid[y + j][x] == EMPTY) {
-                    world->grid[y + j][x] = OBSTACLE;
+        int x, y, valid_position = 0;
+ 
+        // Nájdite voľnú pozíciu mimo bezpečných zón
+        while (!valid_position) {
+            x = rand() % (world->width - 2) + 1;  // Vyhnite sa stenám
+            y = rand() % (world->height - 2) + 1;
+ 
+            // Skontrolujte, či pozícia nie je v bezpečných zónach
+            valid_position = 1;
+            for (int j = 0; j < 5; j++) {
+                if (x == safe_positions[j][0] && y == safe_positions[j][1]) {
+                    valid_position = 0;
+                    break;
                 }
             }
+ 
+            // Skontrolujte, či je pozícia prázdna
+            if (valid_position && world->grid[y][x] != EMPTY) {
+                valid_position = 0;
+            }
         }
+ 
+        // Umiestnite prekážku
+        world->grid[y][x] = OBSTACLE;
     }
 }
-
-
-
+ 
+ 
+ 
+ 
+ 
 void world_add_player(World* world) {
-    bool safe;
     if (world->player_count >= MAX_PLAYERS) {
         printf("Maximálny počet hráčov dosiahnutý.\n");
         return;
     }
-
+ 
     int player_id = world->player_count;
     Snake* snake = &world->snakes[player_id];
+ 
+    // Definované pozície na spawnovanie hráčov (o 3 miesta od okrajov)
+    int spawn_positions[5][2] = {
+        {world->width / 2, world->height / 2},            // Stred
+        {3, 3},                                           // Horný ľavý roh (posunutý)
+        {world->width - 4, 3},                            // Horný pravý roh (posunutý)
+        {3, world->height - 4},                           // Dolný ľavý roh (posunutý)
+        {world->width - 4, world->height - 4}             // Dolný pravý roh (posunutý)
+    };
+ 
+    bool safe = false;
     int x, y;
-
-    // Nájdite bezpečný bod pre spawn
-    do {
-        x = rand() % (world->width - 2) + 1;  // Vyhnite sa stenám
-        y = rand() % (world->height - 2) + 1;
-
+ 
+    // Nájdite bezpečnú pozíciu
+    for (int i = 0; i < 5; i++) {
+        x = spawn_positions[i][0];
+        y = spawn_positions[i][1];
+ 
         safe = true;
-
-        // Skontrolujte, či je bod bezpečný
-        for (int i = 0; i < world->player_count; i++) {
-            Snake* other_snake = &world->snakes[i];
-            for (int j = 0; j < other_snake->length; j++) {
-                if (other_snake->body[j].x == x && other_snake->body[j].y == y) {
+ 
+        // Skontrolujte, či sa tam nenachádza iný hráč
+        for (int j = 0; j < world->player_count; j++) {
+            Snake* other_snake = &world->snakes[j];
+            for (int k = 0; k < other_snake->length; k++) {
+                if (other_snake->body[k].x == x && other_snake->body[k].y == y) {
                     safe = false;
                     break;
                 }
             }
             if (!safe) break;
         }
-
+ 
+        // Skontrolujte, či sa tam nenachádza prekážka
         if (world->grid[y][x] != EMPTY) {
             safe = false;
         }
-
-    } while (!safe);
-
+ 
+        if (safe) break; // Ak sme našli bezpečné miesto, ukončíme hľadanie
+    }
+ 
+    // Ak nebola nájdená bezpečná predvolená pozícia, generujeme náhodne
+    if (!safe) {
+        do {
+            x = rand() % (world->width - 2) + 1;
+            y = rand() % (world->height - 2);
+ 
+            safe = true;
+ 
+            // Rovnaké kontroly pre náhodnú pozíciu
+            for (int i = 0; i < world->player_count; i++) {
+                Snake* other_snake = &world->snakes[i];
+                for (int j = 0; j < other_snake->length; j++) {
+                    if (other_snake->body[j].x == x && other_snake->body[j].y == y) {
+                        safe = false;
+                        break;
+                    }
+                }
+                if (!safe) break;
+            }
+ 
+            if (world->grid[y][x] != EMPTY) {
+                safe = false;
+            }
+ 
+        } while (!safe);
+    }
+ 
     // Inicializujte hada
     snake_init(snake, x, y);
     snake->id = player_id;
-
+ 
     // Označte hada na mriežke
     for (int i = 0; i < snake->length; i++) {
         world->grid[snake->body[i].y][snake->body[i].x] = SNAKE;
     }
-
+ 
     world->player_count++;
 }
 
-
-// Funkcia na inicializáciu farieb
-void world_init_colors() {
-    start_color();
-    init_pair(COLOR_PAIR_FRUIT, COLOR_GREEN, COLOR_BLACK);
-    init_pair(COLOR_PAIR_SNAKE, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(COLOR_PAIR_WALL, COLOR_BLUE, COLOR_BLACK);
-    init_pair(COLOR_PAIR_OBSTACLE, COLOR_RED, COLOR_BLACK);
-}
 
 // Generovanie ovocia na náhodnej pozícii
 void world_generate_fruit(World* world) {
@@ -108,7 +156,7 @@ void world_generate_fruit(World* world) {
 
 // Inicializácia sveta
 void world_init(World* world, int width, int height, int rezim, int typ) {
-    world->player_count = 1;
+    world->player_count = 0;
     world->width = width;
     world->height = height;
     world->typ = typ;
@@ -129,25 +177,21 @@ void world_init(World* world, int width, int height, int rezim, int typ) {
     }
 
     srand(time(NULL));
-    world_init_colors();
+    
 
     // Inicializácia mriežky (steny a prázdne políčka)
-    for (int i = 0; i < world->height; i++) {
-        for (int j = 0; j < world->width; j++) {
+    for (int i = 0; i < world->height; i++) {           // Prechádza riadkami
+        for (int j = 0; j < world->width; j++) {        // Prechádza stĺpcami
             world->grid[i][j] = (i == 0 || i == world->height - 1 || j == 0 || j == world->width - 1) ? WALL : EMPTY;
-        }
     }
+}
+
 
     // Ak je typ sveta 2, generuj prekážky
     if (typ == 2) {
         world_generate_obstacles(world);
     }
 
-    // Inicializácia prvého hada
-    snake_init(&world->snakes[0], world->width / 2, world->height / 2);
-    for (int i = 0; i < world->snakes[0].length; i++) {
-        world->grid[world->snakes[0].body[i].y][world->snakes[0].body[i].x] = SNAKE;
-    }
 
     // Generovanie prvého ovocia
     fruit_init(&world->fruit);
@@ -236,7 +280,7 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
         bool ate_fruit = (new_x == world->fruit.position.x && new_y == world->fruit.position.y);
         if (ate_fruit) {
             snake->length++;
-            mvprintw(world->height + 2, 0, "Hráč %d zjedol ovocie!", p);
+            mvprintw(world->height + 30, 0, "Hráč %d zjedol ovocie!", p);
             world_generate_fruit(world);
         } else {
             // Uvoľnite poslednú pozíciu hada
@@ -293,42 +337,6 @@ void world_update(World* world, int keys[MAX_PLAYERS]) {
     }
 }
 
-
-
-// Vykreslenie sveta
-void world_draw(const World* world) {
-    clear(); // Vyčistenie obrazovky
-    for (int i = 0; i < world->height; i++) {
-        for (int j = 0; j < world->width; j++) {
-            char c = world->grid[i][j];
-            switch (c) {
-                case FRUIT:
-                    attron(COLOR_PAIR(COLOR_PAIR_FRUIT));
-                    mvaddch(i, j, c);
-                    attroff(COLOR_PAIR(COLOR_PAIR_FRUIT));
-                    break;
-                case SNAKE:
-                    attron(COLOR_PAIR(COLOR_PAIR_SNAKE));
-                    mvaddch(i, j, c);
-                    attroff(COLOR_PAIR(COLOR_PAIR_SNAKE));
-                    break;
-                case WALL:
-                    attron(COLOR_PAIR(COLOR_PAIR_WALL));
-                    mvaddch(i, j, c);
-                    attroff(COLOR_PAIR(COLOR_PAIR_WALL));
-                    break;
-                case OBSTACLE:
-                    attron(COLOR_PAIR(COLOR_PAIR_OBSTACLE));
-                    mvaddch(i, j, c);
-                    attroff(COLOR_PAIR(COLOR_PAIR_OBSTACLE));
-                    break;
-                default:
-                    mvaddch(i, j, c);
-            }
-        }
-    }
-    refresh();
-}
 
 // Uvoľnenie dynamicky alokovanej pamäte
 void world_free(World* world) {

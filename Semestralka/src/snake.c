@@ -9,4 +9,3 @@ void snake_init(Snake* snake, int start_x, int start_y) {
     snake->body[0].y = start_y;
     snake->dead = false;
 }
-

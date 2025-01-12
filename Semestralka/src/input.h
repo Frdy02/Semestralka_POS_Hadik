@@ -6,3 +6,4 @@
 void input(int* key);
 
 #endif
+
